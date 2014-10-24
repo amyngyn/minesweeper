@@ -1,0 +1,47 @@
+<html>
+<head>
+  <style>
+    table, td, tr {
+      border-collapse: collapse;
+      border-style: hidden;
+      border: 1px solid black
+    }
+
+    td {
+      padding: 10px;
+      margin: 10px;
+      font-family: monospace;
+      background-color: #B2B2B2;
+    }
+
+    .cell {
+      font-weight: bold;
+    }
+
+    .cell-X {
+      color: red;
+    }
+    .cell-0 {
+      background-color: #C2C2C2;
+    }
+    .cell-1 {
+      color: blue;
+    }
+    .cell-2 {
+      color: green;
+    }
+    .cell-3 {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <p id='mine-count'></p>
+  <p id='round-result'>Welcome to Minesweeper!</p>
+  <table id='minesweeper'></table>
+
+  <script src='/home/amy/Projects/jquery-1.11.1.min.js'></script>
+  <script src='/home/amy/Projects/minesweeper/constants.js'></script>
+  <script src='/home/amy/Projects/minesweeper/minesweeper.js'></script>
+</body>
+</html>
