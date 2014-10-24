@@ -1,6 +1,5 @@
 var MINE = minesweeper.MINE;
 
-// TODO consider putting these utility functions into their own file
 /**
  * Returns a list of row-cell tuples for cells adjacent to this row and column.
  *
@@ -80,18 +79,18 @@ var generateField = function(settings) {
   return field;
 };
 
-var revealCell = function(display, field, row, col, test) {
+var revealCell = function(field, row, col) {
   var cell = $('#minesweeper')[0].rows[row].cells[col];
   if (field[row][col] == MINE) {
     cell.innerHTML = field[row][col];
     $('#round-result')[0].innerHTML = 'You lose!'
   } else if (field[row][col] != 0) {
     cell.innerHTML = field[row][col];
-  } else if (cell.innerHTML == '&nbsp;') {
+  } else if (cell.innerHTML == '&nbsp;') { // TODO figure out how to stop recursion
     cell.innerHTML = '&nbsp; ';
     var neighbors = getNeighbors(field, row, col);
     for (var i = 0; i < neighbors.length; i++) {
-      revealCell(display, field, neighbors[i][0], neighbors[i][1], true);
+      revealCell(field, neighbors[i][0], neighbors[i][1]);
     }
   }
   cell.className = 'cell-' + field[row][col];
@@ -105,7 +104,7 @@ var initializeDisplay = function(display, field) {
       td.innerHTML = '&nbsp';
       td.className = 'cell';
       td.onclick = function(event) {
-        revealCell(display, field, i, j);
+        revealCell(field, i, j);
       };
       tr.appendChild(td);
     });
