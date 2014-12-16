@@ -1,18 +1,38 @@
-table, td, tr {
-  border-collapse: collapse;
-  border-style: hidden;
-  border: 1px solid black
+#border-container {
+  display: inline-block;
+  padding: 10px;
+  background-color: #BEBFC0;
 }
 
-td {
-  padding: 10px;
-  margin: 10px;
-  font-family: monospace;
-  background-color: #B2B2B2;
+#minesweeper {
+  border-top: 3px solid #808080;
+  border-left: 3px solid #808080;
+  border-bottom: 3px solid white;
+  border-right: 3px solid white;
 }
 
 .cell {
+  border-top: 3px solid white;
+  border-left: 3px solid white;
+  border-right: 3px solid #808080;
+  border-bottom: 3px solid #808080;
+  padding-left: 7px;
+  padding-right: 7px;
+  padding-bottom: 5px;
+  padding-top: 4px;
+  font-family: monospace;
+  background-color: #C0C0C0;
+}
+
+.revealed {
+  border: 1px solid #828282;
   font-weight: bold;
+  text-align: center;
+  padding-left: 7px;
+  padding-right: 8px;
+  padding-bottom: 6px;
+  padding-top: 7px;
+  min-width: 11px;
 }
 
 .cell-X {

@@ -93,7 +93,7 @@ var revealCell = function(field, row, col) {
       revealCell(field, neighbors[i][0], neighbors[i][1]);
     }
   }
-  cell.className = 'cell-' + field[row][col];
+  cell.className = 'revealed cell cell-' + field[row][col];
 };
 
 var initializeDisplay = function(display, field) {
