@@ -4,13 +4,18 @@
 </head>
 <body>
   <p id='mine-count'></p>
-  <p id='message'>Welcome to Minesweeper!</p>
-  <div id="border-container">
-    <table id='minesweeper' class="no-highlight" cellspacing="0"></table>
-  </div>
+  <div id="minesweeper-container" class="no-highlight"></div>
 
   <script src='jquery-1.11.1.min.js'></script>
   <script src='constants.js'></script>
   <script src='minesweeper.js'></script>
+
+  <script>
+    var settings = minesweeper.SETTINGS.EXPERT;
+    //settings.mines = 0;
+    var ms = new Minesweeper('#minesweeper-container');
+    ms.init(settings);
+  </script>
 </body>
 </html>
+

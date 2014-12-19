@@ -1,58 +1,105 @@
-#border-container {
+#minesweeper-container {
   display: inline-block;
   padding: 10px;
   background-color: #BEBFC0;
 }
 
-#minesweeper {
+.inset {
   border-top: 3px solid #808080;
-  border-left: 3px solid #808080;
-  border-bottom: 3px solid white;
   border-right: 3px solid white;
+  border-bottom: 3px solid white;
+  border-left: 3px solid #808080;
+}
+
+.outset {
+  border-top: 3px solid white;
+  border-right: 3px solid #808080;
+  border-bottom: 3px solid #808080;
+  border-left: 3px solid white;
+}
+
+.control-panel {
+  /* width set in minesweeper.js:initControlPanel */
+  height: 38px;
+  margin-bottom: 10px;
+}
+
+.reset-button {
+  width: 32px;
+  height: 32px;
+  /* margin-left set in minesweeper.js:initControlPanel to center this */
 }
 
 .cell {
-  border-top: 3px solid white;
-  border-left: 3px solid white;
-  border-right: 3px solid #808080;
-  border-bottom: 3px solid #808080;
-  padding-left: 7px;
-  padding-right: 7px;
-  padding-bottom: 5px;
-  padding-top: 4px;
+  padding: 4px 8px 5px 8px;
   font-family: monospace;
+  font-weight: bold;
+  color: #C0C0C0;
   background-color: #C0C0C0;
 }
 
 .revealed {
-  border: 1px solid #828282;
-  font-weight: bold;
+  border-top: 1px solid #828282;
+  border-left: 1px solid #828282;
   text-align: center;
-  padding-left: 7px;
-  padding-right: 8px;
-  padding-bottom: 6px;
-  padding-top: 7px;
-  min-width: 11px;
+  padding: 7px 10px 7px 9px;
+  min-width: 10px;
 }
 
 .cell-X {
-  color: red;
+  color: black;
+  background-color: #FF0D0D;
 }
 
 .cell-0 {
+  color: #C2C2C2;
   background-color: #C2C2C2;
 }
 
 .cell-1 {
-  color: blue;
+  color: #110CBD; /* blue */
 }
 
 .cell-2 {
-  color: green;
+  color: #155F10; /* green */
 }
 
 .cell-3 {
-  color: red;
+  color: #BB1419; /* red */
+}
+
+.cell-4 {
+  color: #02126A; /* indigo */
+}
+
+.cell-5 {
+  color: #740E19; /* brown */
+}
+
+.cell-6 {
+  color: #008284; /* teal */
+}
+
+.cell-7 {
+  color: #840185; /* purple */
+}
+
+.cell-8 {
+  color: #757575; /* gray */
+}
+
+.debug {
+  color: #A0A0A0;
+}
+
+.debug-link {
+  float: left;
+  color: #808080;
+  text-decoration: none;
+}
+
+.flagged {
+  color: black;
 }
 
 .no-highlight {
@@ -63,3 +110,4 @@
   -ms-user-select: none;
   user-select: none;
 }
+
