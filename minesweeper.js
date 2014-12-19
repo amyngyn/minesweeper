@@ -1,4 +1,4 @@
-var debug = true;
+var debug = false;
 var MINE = minesweeper.MINE;
 
 /**
@@ -384,6 +384,7 @@ Minesweeper.prototype.gameLost = function() {
  * When called, reveals (or hides) values of all cells.
  */
 Minesweeper.prototype.toggleDebug = function() {
+  debug = !debug;
   $('.cell:not(.revealed)').toggleClass('debug');
 };
 
