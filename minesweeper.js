@@ -1,6 +1,3 @@
-var debug = false;
-var MINE = minesweeper.MINE;
-
 /**
  * Constructor for a Minesweeper game object.
  *
@@ -9,21 +6,49 @@ var MINE = minesweeper.MINE;
  */
 var Minesweeper = function(containerId) {
   this.container = $(containerId);
+
+  this.MINE = 'X';
+  this.FLAG = 'X';
+  this.MAX_TIME = 999;
+  this.SETTINGS = {
+    BEGINNER: {
+      rows: 8,
+      cols: 8,
+      mines: 10 
+    },
+    INTERMEDIATE: {
+      rows: 16,
+      cols: 16,
+      mines: 40
+    },
+    EXPERT: {
+      rows: 16,
+      cols: 30,
+      mines: 99
+    }
+  };
 };
 
 /**
  * Attaches Minesweeper display to screen and sets up click listeners.
  */
 Minesweeper.prototype.init = function(settings) {
+  this.debug = false;
+
   this.settings = settings;
   this.won = false;
   this.lost = false;
+
   this.firstClickOccurred = false;
+
   this.cellsRevealed = 0;
   this.cellsFlagged = 0;
   this.cellsToReveal = (settings.rows * settings.cols) - settings.mines;
+
   this.elapsedTime = 0;
   clearInterval(this.timeInterval);
+
+  this.misclickCount = 0;
 
   this.initField(settings.rows, settings.cols);
   this.initDisplay();
@@ -70,10 +95,10 @@ Minesweeper.prototype.setMines = function(mines, firstClickRow, firstClickCol) {
 
     // Cannot use cell if the user just clicked it or if it was already a mine
     if ((row == firstClickRow && col == firstClickCol)
-      || (field[row][col] && field[row][col].val == MINE)) continue;
+      || (field[row][col] && field[row][col].val == this.MINE)) continue;
 
     field[row][col] = {
-      val: MINE,
+      val: this.MINE,
       flagged: false
     };
 
@@ -93,13 +118,13 @@ Minesweeper.prototype.setMines = function(mines, firstClickRow, firstClickCol) {
  */
 Minesweeper.prototype.countAdjacentMines = function(row, col) {
   var field = this.field;
-  if (field[row][col] && field[row][col].val == MINE) return MINE;
+  if (field[row][col] && field[row][col].val == this.MINE) return this.MINE;
   var count = 0;
   var neighbors = this.getNeighbors(row, col);
   for (var i = 0; i < neighbors.length; i++) {
     var r = neighbors[i].row;
     var c = neighbors[i].col;
-    if (field[r][c] && field[r][c].val == MINE) count++;
+    if (field[r][c] && field[r][c].val == this.MINE) count++;
   }
   return count;
 };
@@ -163,10 +188,10 @@ Minesweeper.prototype.initDisplay = function() {
 
       // styling
       td.addClass('cell outset');
-      if (debug) td.addClass('debug');
+      if (that.debug) td.addClass('debug');
       if (that.field[r][c].flagged) {
         td.addClass('flagged');
-        td.html(minesweeper.FLAG);
+        td.html(that.FLAG);
       }
 
       tr.appendChild(td.get(0));
@@ -255,11 +280,15 @@ Minesweeper.prototype.mainClickHandler = function(row, col) {
   // do nothing if already lost or if a flagged cell is clicked
   if (this.gameEnded() || field[row][col].flagged) return;
 
-  if (this.flagAllNeighborsRequested(row, col)) {
+  if (!this.getCell(row, col).hasClass('revealed')) {
+    this.revealCell(row, col);
+
+  } else if (this.flagAllNeighborsRequested(row, col)) {
     var neighbors = this.getNeighbors(row, col);
     for (var i = 0; i < neighbors.length; i++) {
       this.toggleFlag(neighbors[i].row, neighbors[i].col, true);
     }
+
   } else if (this.expandRequested(row, col)) {
     var neighbors = this.getNeighbors(row, col);
     for (var i = 0; i < neighbors.length; i++) {
@@ -268,7 +297,7 @@ Minesweeper.prototype.mainClickHandler = function(row, col) {
     }
 
   } else {
-    this.revealCell(row, col);
+    this.misclickCount++;
   }
 };
 
@@ -311,10 +340,10 @@ Minesweeper.prototype.revealSingleCell = function(row, col) {
   displayCell.html(cell.val);
   displayCell.addClass('revealed cell-' + cell.val);
   displayCell.removeClass('outset');
-  if (debug) displayCell.removeClass('debug');
+  if (this.debug) displayCell.removeClass('debug');
 
   this.cellsRevealed++;
-  if (cell.val == MINE) {
+  if (cell.val == this.MINE) {
     this.displayLoss();
   } else if (this.cellsRevealed == this.cellsToReveal) {
     this.displayWin();
@@ -387,12 +416,12 @@ Minesweeper.prototype.expandRequested = function(row, col) {
 Minesweeper.prototype.toggleFlag = function(row, col, forceFlag) {
   var displayCell = this.getCell(row, col);
 
-  if (displayCell.hasClass('revealed')) return;
+  if (this.gameEnded() || displayCell.hasClass('revealed')) return;
 
   var cell = this.field[row][col];
   if (!this.field[row][col].flagged) {
     displayCell.addClass('flagged');
-    displayCell.html(minesweeper.FLAG);
+    displayCell.html(this.FLAG);
     this.cellsFlagged++;
     cell.flagged = true;
   } else if (!forceFlag) {
@@ -411,7 +440,7 @@ Minesweeper.prototype.startTimer = function() {
   var that = this;
   this.timeInterval = setInterval(function() {
     that.controlPanel.timer.html(++that.elapsedTime);
-    if (that.elapsedTime > minesweeper.MAX_TIME)
+    if (that.elapsedTime > that.MAX_TIME)
       clearInterval(that.timeInterval);
   }, 1000);
 };
@@ -436,7 +465,7 @@ Minesweeper.prototype.displayLoss = function() {
   for (var r = 0; r < this.field.length; r++) {
     for (var c = 0; c < this.field[0].length; c++) {
       var cell = this.field[r][c];
-      if (cell.val == MINE && !cell.flagged) {
+      if (cell.val == this.MINE && !cell.flagged) {
         this.revealSingleCell(r, c);
       }
     }
@@ -448,7 +477,7 @@ Minesweeper.prototype.displayLoss = function() {
  * lost, even if mines have been revealed.
  */
 Minesweeper.prototype.gameEnded = function() {
-  return !debug && (this.won || this.lost);
+  return !this.debug && (this.won || this.lost);
 };
 
 /**
@@ -463,7 +492,7 @@ Minesweeper.prototype.zeroFill = function(value, length) {
  * When called, reveals (or hides) values of all cells.
  */
 Minesweeper.prototype.toggleDebug = function() {
-  debug = !debug;
+  this.debug = !this.debug;
   $('.cell:not(.revealed)').toggleClass('debug');
 };
 

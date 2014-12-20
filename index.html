@@ -7,13 +7,11 @@
   <div id="minesweeper-container" class="no-highlight"></div>
 
   <script src='jquery-1.11.1.min.js'></script>
-  <script src='constants.js'></script>
   <script src='minesweeper.js'></script>
 
   <script>
-    var settings = minesweeper.SETTINGS.EXPERT;
     var ms = new Minesweeper('#minesweeper-container');
-    ms.init(settings);
+    ms.init(ms.SETTINGS.EXPERT);
   </script>
 </body>
 </html>
