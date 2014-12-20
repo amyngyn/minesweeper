@@ -1,6 +1,6 @@
 minesweeper
 ===========
-This is an implementation of [Minesweeper][http://en.wikipedia.org/wiki/Microsoft_Minesweeper]. To use this, create a `Minesweeper` object and call `init` on it with the desired settings. For example usage, see `index.html`.
+This is an implementation of [Minesweeper](http://en.wikipedia.org/wiki/Microsoft_Minesweeper). To use this, create a `Minesweeper` object and call `init` on it with the desired settings. For example usage, see `index.html`.
 
 differences from classic
 ------------------------
@@ -11,6 +11,6 @@ differences from classic
 todo
 ----
  * add icons for mines, flags, and start button (win, lose, reset)
- * *hint system* - when stuck, point out rules that can be applied
- * *evil minesweeper* - for uncertain situations, always set the mines to be where the user clicked
- * *good minesweeper* - in a situation where no mines can be flagged absolutely, reveal a mine
+ * **hint system** - when stuck, point out rules that can be applied
+ * **evil minesweeper** - for uncertain situations, always set the mines to be where the user clicked
+ * **good minesweeper** - in a situation where no mines can be flagged absolutely, reveal a mine
