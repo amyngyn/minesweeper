@@ -16,10 +16,16 @@ var Minesweeper = function(containerId) {
  */
 Minesweeper.prototype.init = function(settings) {
   this.settings = settings;
+  this.won = false;
   this.lost = false;
   this.firstClickOccurred = false;
+  this.cellsRevealed = 0;
+  this.cellsFlagged = 0;
+  this.cellsToReveal = (settings.rows * settings.cols) - settings.mines;
+  this.elapsedTime = 0;
+  clearInterval(this.timeInterval);
 
-  this.initField(settings.rows, settings.cols, settings.mines);
+  this.initField(settings.rows, settings.cols);
   this.initDisplay();
 };
 
@@ -32,7 +38,7 @@ Minesweeper.prototype.init = function(settings) {
  * cell. flagged starts out as false and is toggled when the user marks a cell
  * as a flag.
  */
-Minesweeper.prototype.initField = function(rows, cols, mines) {
+Minesweeper.prototype.initField = function(rows, cols) {
   // Initialize 2-D array
   this.field = [];
   for (var i = 0; i < rows; i++) {
@@ -42,7 +48,6 @@ Minesweeper.prototype.initField = function(rows, cols, mines) {
     }
     this.field.push(row);
   }
-  this.mines = mines;
 };
 
 /**
@@ -115,9 +120,10 @@ Minesweeper.prototype.handleFirstClick = function(row, col) {
       that.revealCell(row, col);
     });
   } else {
-    this.setMines(this.mines, row, col);
-    this.initDisplay();
     this.firstClickOccurred = true;
+    this.setMines(this.settings.mines, row, col);
+    this.initDisplay();
+    this.startTimer();
   }
 
   this.revealCell(row, col);
@@ -181,13 +187,18 @@ Minesweeper.prototype.initControlPanel = function() {
   var that = this;
   this.controlPanel = $(document.createElement('div'));
   this.controlPanel.resetButton = $(document.createElement('div'));
+  this.controlPanel.flagCount = $(document.createElement('div'));
+  this.controlPanel.timer = $(document.createElement('div'));
+
   var controlPanel = this.controlPanel;
   var resetButton = this.controlPanel.resetButton;
+  var flagCount = this.controlPanel.flagCount;
+  var timer = this.controlPanel.timer;
 
   // need elements on screen for width calculations, hide panel until done
   controlPanel.append(resetButton);
   controlPanel.css('visibility', 'hidden');
-  $(this.container).prepend(controlPanel);
+  this.container.prepend(controlPanel);
 
   // overall panel styling
   controlPanel.addClass('control-panel inset');
@@ -198,7 +209,7 @@ Minesweeper.prototype.initControlPanel = function() {
   debugLink.html('debug');
   debugLink.click(this.toggleDebug);
   debugLink.addClass('debug-link');
-  controlPanel.prepend(debugLink);
+  this.container.append(debugLink);
 
   // reset button styling and clicks
   resetButton.addClass('reset-button outset');
@@ -208,7 +219,18 @@ Minesweeper.prototype.initControlPanel = function() {
     that.init(that.settings);
   });
 
-  // TODO: mine count and timer
+  // counter for mines left
+  controlPanel.prepend(flagCount);
+  flagCount.addClass('counter');
+  flagCount.html(this.zeroFill(this.settings.mines, 2));
+  flagCount.css('float', 'left');
+
+  // counter for time elapsed
+  controlPanel.prepend(timer);
+  timer.addClass('counter');
+  timer.html(this.zeroFill(0));
+  timer.css('float', 'right');
+  timer.css('text-align', 'right');
 
   controlPanel.css('visibility', 'visible');
 };
@@ -233,7 +255,7 @@ Minesweeper.prototype.revealCell = function(row, col) {
   var field = this.field;
 
   // do nothing if already lost or if a flagged cell is clicked
-  if (this.gameLost() || field[row][col].flagged) return;
+  if (this.gameEnded() || field[row][col].flagged) return;
 
   // revealCellHelper must be called on each neighbor for an expand because
   // the helper assumes it is working on unrevealed cells and will also return
@@ -242,7 +264,7 @@ Minesweeper.prototype.revealCell = function(row, col) {
     var neighbors = this.getNeighbors(row, col);
     for (var i = 0; i < neighbors.length; i++) {
       this.revealCellHelper(neighbors[i].row, neighbors[i].col);
-      if (this.gameLost()) return;
+      if (this.gameEnded()) return;
     }
 
   } else {
@@ -266,34 +288,55 @@ Minesweeper.prototype.revealCellHelper = function(row, col) {
   this.revealSingleCell(row, col);
 
   // base case: stop expanding if cell is non-zero or its reveal lead to a loss 
-  if (this.gameLost() || this.field[row][col].val != 0) return;
+  if (this.gameEnded() || this.field[row][col].val != 0) return;
 
   // recursive step: reveal neighbors
   var neighbors = this.getNeighbors(row, col);
   for (var i = 0; i < neighbors.length; i++) {
     this.revealCellHelper(neighbors[i].row, neighbors[i].col);
-    if (this.gameLost()) return;
+    if (this.gameEnded()) return;
   }
 };
 
 /**
  * Updates styling for a cell so that it shows its number on the screen.
- * Triggers loss status if this cell was a mine.
+ * Checks whether this reveal resulted in a win or loss.
  */
 Minesweeper.prototype.revealSingleCell = function(row, col) {
-  var cell = this.getCell(row, col);
+  var displayCell = this.getCell(row, col);
+  var cell = this.field[row][col];
 
-  if (cell.flagged) return;
+  if (displayCell.hasClass('revealed') || cell.flagged) return;
 
-  var val = this.field[row][col].val;
-  cell.html(val);
-  if (debug) cell.removeClass('debug');
-  cell.addClass('revealed cell-' + val);
-  cell.removeClass('outset');
+  displayCell.html(cell.val);
+  displayCell.addClass('revealed cell-' + cell.val);
+  displayCell.removeClass('outset');
+  if (debug) displayCell.removeClass('debug');
 
-  if (val == MINE) {
+  this.cellsRevealed++;
+  if (cell.val == MINE) {
     this.displayLoss();
+  } else if (this.cellsRevealed == this.cellsToReveal) {
+    this.displayWin();
   }
+};
+
+/**
+ * Returns a list of coordinates for cells adjacent to this row and column.
+ */
+Minesweeper.prototype.getNeighbors = function(row, col) {
+  var field = this.field;
+  var neighbors = [];
+  for (var r = row - 1; r <= row + 1; r++) {
+    for (var c = col - 1; c <= col + 1; c++) {
+      if (0 <= r && r < field.length
+          && 0 <= c && c < field[0].length
+          && !(r == row && c == col)) {
+        neighbors.push({row: r, col: c});
+      }
+    }
+  }
+  return neighbors;
 };
 
 /**
@@ -319,8 +362,9 @@ Minesweeper.prototype.validExpandRequested = function(row, col) {
 
 /**
  * Switches styling to display a flagged or unflagged cell.
+ * TODO: use forceFlag variable to allow auto flagging feature
  */
-Minesweeper.prototype.toggleFlag = function(row, col) {
+Minesweeper.prototype.toggleFlag = function(row, col, forceFlag) {
   var displayCell = this.getCell(row, col);
 
   if (displayCell.hasClass('revealed')) return;
@@ -329,21 +373,46 @@ Minesweeper.prototype.toggleFlag = function(row, col) {
   if (!this.field[row][col].flagged) {
     displayCell.addClass('flagged');
     displayCell.html(minesweeper.FLAG);
+    this.cellsFlagged++;
     cell.flagged = true;
-  } else {
+  } else if (!forceFlag) {
     displayCell.removeClass('flagged');
     displayCell.html(cell.val);
+    this.cellsFlagged--;
     cell.flagged = false;
   }
+  this.controlPanel.flagCount.html(this.settings.mines - this.cellsFlagged);
 };
 
 /**
- * Reveals all mines, shows loss message, and sets this.lost to true.
+ * Starts timer so that display clock ticks every second.
+ */
+Minesweeper.prototype.startTimer = function() {
+  var that = this;
+  this.timeInterval = setInterval(function() {
+    that.controlPanel.timer.html(++that.elapsedTime);
+    if (that.elapsedTime > minesweeper.MAX_TIME)
+      clearInterval(that.timeInterval);
+  }, 1000);
+};
+
+/**
+ * Stops timer and shows win message.
+ */
+Minesweeper.prototype.displayWin = function() {
+  this.won = true;
+  this.controlPanel.resetButton.html('You win!');
+  clearInterval(this.timeInterval);
+};
+
+/**
+ * Reveals all unflagged mines, shows loss message, and sets this.lost to true.
  */
 Minesweeper.prototype.displayLoss = function() {
   if (this.lost) return;
   this.lost = true;
   this.controlPanel.resetButton.html('You lose!');
+  clearInterval(this.timeInterval);
   for (var r = 0; r < this.field.length; r++) {
     for (var c = 0; c < this.field[0].length; c++) {
       var cell = this.field[r][c];
@@ -355,29 +424,19 @@ Minesweeper.prototype.displayLoss = function() {
 };
 
 /**
- * Returns a list of coordinates for cells adjacent to this row and column.
- */
-Minesweeper.prototype.getNeighbors = function(row, col) {
-  var field = this.field;
-  var neighbors = [];
-  for (var r = row - 1; r <= row + 1; r++) {
-    for (var c = col - 1; c <= col + 1; c++) {
-      if (0 <= r && r < field.length
-          && 0 <= c && c < field[0].length
-          && !(r == row && c == col)) {
-        neighbors.push({row: r, col: c});
-      }
-    }
-  }
-  return neighbors;
-};
-
-/**
  * For debugging purposes, allow the user to continue playing as if they haven't
  * lost, even if mines have been revealed.
  */
-Minesweeper.prototype.gameLost = function() {
-  return !debug && this.lost;
+Minesweeper.prototype.gameEnded = function() {
+  return !debug && (this.won || this.lost);
+};
+
+/**
+ * Returns the given value as a string padded with zeroes up to length.
+ */
+Minesweeper.prototype.zeroFill = function(value, length) {
+  if (length === undefined) length = 3;
+  return value;
 };
 
 /**

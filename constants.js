@@ -1,6 +1,7 @@
 minesweeper = {};
 minesweeper.MINE = 'X';
 minesweeper.FLAG = 'X';
+minesweeper.MAX_TIME = 999;
 minesweeper.SETTINGS = {
   BEGINNER: {
     rows: 8,
