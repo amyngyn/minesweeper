@@ -111,13 +111,13 @@ Minesweeper.prototype.countAdjacentMines = function(row, col) {
  * already made, so we can just change this cell's click handler for the
  * duration of the game.
  */
-Minesweeper.prototype.handleFirstClick = function(row, col) {
+Minesweeper.prototype.firstClickHandler = function(row, col) {
   if (this.field[row][col].flagged) return;
 
   if (this.firstClickOccurred) {
     var that = this;
     this.getCell(row, col).click(function(event) {
-      that.revealCell(row, col);
+      that.mainClickHandler(row, col);
     });
   } else {
     this.firstClickOccurred = true;
@@ -126,7 +126,7 @@ Minesweeper.prototype.handleFirstClick = function(row, col) {
     this.startTimer();
   }
 
-  this.revealCell(row, col);
+  this.mainClickHandler(row, col);
 };
 
 /**
@@ -152,7 +152,7 @@ Minesweeper.prototype.initDisplay = function() {
 
       // left click
       td.click(function(event) {
-        that.handleFirstClick(r, c);
+        that.firstClickHandler(r, c);
       });
       
       // right click
@@ -243,32 +243,32 @@ Minesweeper.prototype.getCell = function(row, col) {
 };
 
 /**
- * Reveals the contents of a cell.
- *
- * Special cases:
- * - User wants to reveal neighbors of a cell they previously revealed and have
- *   flagged mines for. Flags may be inaccurate, so a mine could be revealed.
- * - User reveals a cell that is not adjacent to any mines, which triggers more
- *   reveals up until non-zero cells are found.
+ * Click (left) usually means reveal the cell selected. For revealed cells,
+ * behavior depends on its neighbors. If the number of unrevealed neighbors is
+ * equal to this cell's value, flag all of them. If the user has already flagged
+ * exactly as many mines as this cell's value, expand the rest (potentially
+ * resulting in a loss).
  */
-Minesweeper.prototype.revealCell = function(row, col) {
+Minesweeper.prototype.mainClickHandler = function(row, col) {
   var field = this.field;
 
   // do nothing if already lost or if a flagged cell is clicked
   if (this.gameEnded() || field[row][col].flagged) return;
 
-  // revealCellHelper must be called on each neighbor for an expand because
-  // the helper assumes it is working on unrevealed cells and will also return
-  // early if it is given a non-zero cell.
-  if (this.validExpandRequested(row, col)) {
+  if (this.flagAllNeighborsRequested(row, col)) {
     var neighbors = this.getNeighbors(row, col);
     for (var i = 0; i < neighbors.length; i++) {
-      this.revealCellHelper(neighbors[i].row, neighbors[i].col);
+      this.toggleFlag(neighbors[i].row, neighbors[i].col, true);
+    }
+  } else if (this.expandRequested(row, col)) {
+    var neighbors = this.getNeighbors(row, col);
+    for (var i = 0; i < neighbors.length; i++) {
+      this.revealCell(neighbors[i].row, neighbors[i].col);
       if (this.gameEnded()) return;
     }
 
   } else {
-    this.revealCellHelper(row, col);
+    this.revealCell(row, col);
   }
 };
 
@@ -277,10 +277,10 @@ Minesweeper.prototype.revealCell = function(row, col) {
  * doesn't have any neighboring mines (i.e., its field value is 0).
  *
  * It is possible to lose if the user manually tries to expand all neighbors on
- * a cell by incorrectly flagging neighboring cells (see revealCell); otherwise,
- * it shouldn't be possible for this to result in a loss.
+ * a cell by incorrectly flagging neighboring cells (see mainClickHandler);
+ * otherwise, it shouldn't be possible for this to result in a loss.
  */
-Minesweeper.prototype.revealCellHelper = function(row, col) {
+Minesweeper.prototype.revealCell = function(row, col) {
   // base case: don't reveal flagged or already revealed cells
   if (this.field[row][col].flagged
       || this.getCell(row, col).hasClass('revealed')) return;
@@ -293,7 +293,7 @@ Minesweeper.prototype.revealCellHelper = function(row, col) {
   // recursive step: reveal neighbors
   var neighbors = this.getNeighbors(row, col);
   for (var i = 0; i < neighbors.length; i++) {
-    this.revealCellHelper(neighbors[i].row, neighbors[i].col);
+    this.revealCell(neighbors[i].row, neighbors[i].col);
     if (this.gameEnded()) return;
   }
 };
@@ -340,10 +340,30 @@ Minesweeper.prototype.getNeighbors = function(row, col) {
 };
 
 /**
+ * Non-traditional feature: If user clicks on a revealed cell and it has exactly
+ * as many unrevealed cells as its mine count, this returns true so that all of
+ * its cells can be flagged immediately.
+ */
+Minesweeper.prototype.flagAllNeighborsRequested = function(row, col) {
+  if (!this.getCell(row, col).hasClass('revealed')) return false;
+
+  var unrevealedCount = 0;
+  var neighbors = this.getNeighbors(row, col);
+  for (var i = 0; i < neighbors.length; i++) {
+    var neighbor = this.getCell(neighbors[i].row, neighbors[i].col);
+    if (!neighbor.hasClass('revealed')) {
+      unrevealedCount++;
+    }
+  }
+
+  return unrevealedCount == this.field[row][col].val;
+};
+
+/**
  * A valid expansion request is one where the cell clicked has already been
  * revealed and has exactly as many flagged neighbors as its own value.
  */
-Minesweeper.prototype.validExpandRequested = function(row, col) {
+Minesweeper.prototype.expandRequested = function(row, col) {
   if (!this.getCell(row, col).hasClass('revealed')) return false;
 
   var flagCount = 0;
@@ -362,7 +382,7 @@ Minesweeper.prototype.validExpandRequested = function(row, col) {
 
 /**
  * Switches styling to display a flagged or unflagged cell.
- * TODO: use forceFlag variable to allow auto flagging feature
+ * @param {Boolean} forceFlag allows an already-flagged cell to stay flagged.
  */
 Minesweeper.prototype.toggleFlag = function(row, col, forceFlag) {
   var displayCell = this.getCell(row, col);
