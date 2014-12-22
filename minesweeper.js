@@ -440,7 +440,7 @@ Minesweeper.prototype.startTimer = function() {
   var that = this;
   this.timeInterval = setInterval(function() {
     that.controlPanel.timer.html(++that.elapsedTime);
-    if (that.elapsedTime > that.MAX_TIME)
+    if (that.elapsedTime == that.MAX_TIME)
       clearInterval(that.timeInterval);
   }, 1000);
 };
