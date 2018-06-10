@@ -496,6 +496,9 @@ Minesweeper.prototype.toggleDebug = function() {
   $('.cell:not(.revealed)').toggleClass('debug');
 };
 
+/**
+ * Creates the div that must wrap cell values for min-width/height reasons.
+ */
 Minesweeper.prototype.createElemForValue = function(val) {
   var div = $(document.createElement('div'));
   if (val == this.MINE) {
