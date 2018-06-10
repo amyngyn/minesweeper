@@ -7,8 +7,8 @@
 var Minesweeper = function(containerId) {
   this.container = $(containerId);
 
-  this.MINE = 'X';
-  this.FLAG = 'X';
+  this.MINE = '\uD83D\uDCA3'; // bomb emoji
+  this.FLAG = '\uD83D\uDEA9'; // triangle flag emoji
   this.MAX_TIME = 999;
   this.SETTINGS = {
     BEGINNER: {
@@ -173,7 +173,7 @@ Minesweeper.prototype.initDisplay = function() {
     row.forEach(function(cell, c) {
 
       var td = $(document.createElement('td'));
-      td.html(that.field[r][c].val);
+      td.html(that.createElemForValue(that.field[r][c].val).get(0));
 
       // left click
       td.click(function(event) {
@@ -337,8 +337,8 @@ Minesweeper.prototype.revealSingleCell = function(row, col) {
 
   if (displayCell.hasClass('revealed') || cell.flagged) return;
 
-  displayCell.html(cell.val);
-  displayCell.addClass('revealed cell-' + cell.val);
+  displayCell.html(this.createElemForValue(cell.val).get(0));
+  displayCell.addClass('revealed cell-' + (cell.val == this.MINE ? 'X' : cell.val));
   displayCell.removeClass('outset');
   if (this.debug) displayCell.removeClass('debug');
 
@@ -421,7 +421,7 @@ Minesweeper.prototype.toggleFlag = function(row, col, forceFlag) {
   var cell = this.field[row][col];
   if (!this.field[row][col].flagged) {
     displayCell.addClass('flagged');
-    displayCell.html(this.FLAG);
+    displayCell.text(this.FLAG);
     this.cellsFlagged++;
     cell.flagged = true;
   } else if (!forceFlag) {
@@ -450,7 +450,7 @@ Minesweeper.prototype.startTimer = function() {
  */
 Minesweeper.prototype.displayWin = function() {
   this.won = true;
-  this.controlPanel.resetButton.html('You win!');
+  this.controlPanel.resetButton.html('\uD83D\uDE0E');
   clearInterval(this.timeInterval);
 };
 
@@ -460,7 +460,7 @@ Minesweeper.prototype.displayWin = function() {
 Minesweeper.prototype.displayLoss = function() {
   if (this.lost) return;
   this.lost = true;
-  this.controlPanel.resetButton.html('You lose!');
+  this.controlPanel.resetButton.html('\uD83D\uDE35'); // dizzy face emoji
   clearInterval(this.timeInterval);
   for (var r = 0; r < this.field.length; r++) {
     for (var c = 0; c < this.field[0].length; c++) {
@@ -496,3 +496,11 @@ Minesweeper.prototype.toggleDebug = function() {
   $('.cell:not(.revealed)').toggleClass('debug');
 };
 
+Minesweeper.prototype.createElemForValue = function(val) {
+  var div = $(document.createElement('div'));
+  if (val == this.MINE) {
+    div.addClass('mine');
+  }
+  div.html(val);
+  return div;
+}

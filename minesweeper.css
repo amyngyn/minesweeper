@@ -27,6 +27,8 @@
 .reset-button {
   width: 32px;
   height: 32px;
+  font-size: 28px;
+  text-align: center;
   /* margin-left set in minesweeper.js:initControlPanel to center this */
 }
 
@@ -41,24 +43,26 @@
 }
 
 .cell {
-  padding: 4px 8px 5px 8px;
+  padding: 5px 2px 6px 9px;
   font-family: monospace;
   font-weight: bold;
   color: #C0C0C0;
   background-color: #C0C0C0;
+  width: 21px;
+  height: 21px;
 }
 
 .revealed {
   border-top: 1px solid #828282;
   border-left: 1px solid #828282;
   text-align: center;
-  padding: 7px 10px 7px 9px;
+  padding: 8px 8px 8px 8px;
   min-width: 10px;
 }
 
 .cell-X {
   color: black;
-  background-color: #FF0D0D;
+  background-color: #e64723;
 }
 
 .cell-0 {
@@ -109,6 +113,7 @@
 
 .flagged {
   color: black;
+  text-align: right;
 }
 
 .no-highlight {
@@ -120,3 +125,15 @@
   user-select: none;
 }
 
+div {
+  min-width: 21px;
+  min-height: 21px;
+}
+
+div.mine {
+  text-align: right;
+}
+
+td:not(.revealed) > div.mine {
+  visibility: hidden;
+}
