@@ -1,7 +1,18 @@
-#minesweeper-container {
+#minesweeper-main {
+  display: flex;
+}
+
+#game-container {
   display: inline-block;
   padding: 15px 15px 1px 15px;
   background-color: #BEBFC0;
+}
+
+#help-container {
+  border: 1px solid black;
+  flex: 1;
+  margin: 0px 10px;
+  padding: 10px;
 }
 
 .inset {
@@ -134,6 +145,6 @@ div.mine {
   text-align: right;
 }
 
-td:not(.revealed) > div.mine {
+td:not(.revealed):not(.debug) > div.mine {
   visibility: hidden;
 }

@@ -5,7 +5,7 @@
  *     minesweeper game's display.
  */
 var Minesweeper = function(containerId) {
-  this.container = $(containerId);
+  this.mainContainer = $(containerId);
 
   this.MINE = '\uD83D\uDCA3'; // bomb emoji
   this.FLAG = '\uD83D\uDEA9'; // triangle flag emoji
@@ -141,7 +141,9 @@ Minesweeper.prototype.firstClickHandler = function(row, col) {
 
   if (this.firstClickOccurred) {
     var that = this;
-    this.getCell(row, col).click(function(event) {
+    var cell = this.getCell(row, col);
+    cell.unbind('click');
+    cell.click(function(event) {
       that.mainClickHandler(row, col);
     });
   } else {
@@ -160,11 +162,12 @@ Minesweeper.prototype.firstClickHandler = function(row, col) {
  */
 Minesweeper.prototype.initDisplay = function() {
   // for resetting the game
-  this.container.empty();
+  if (this.display) this.display.empty();
 
-  this.display = $(document.createElement('table'));
-  this.display.addClass('no-highlight inset');
-  this.display.attr('cellspacing', 0);
+  this.display = $('#game-container');
+  this.gameTable = $(document.createElement('table'));
+  this.gameTable.addClass('no-highlight inset');
+  this.gameTable.attr('cellspacing', 0);
 
   var that = this;
   this.field.forEach(function(row, r) {
@@ -173,7 +176,7 @@ Minesweeper.prototype.initDisplay = function() {
     row.forEach(function(cell, c) {
 
       var td = $(document.createElement('td'));
-      td.html(that.createElemForValue(that.field[r][c].val).get(0));
+      td.html(that.createElemForValue(that.field[r][c].val));
 
       // left click
       td.click(function(event) {
@@ -196,11 +199,11 @@ Minesweeper.prototype.initDisplay = function() {
 
       tr.appendChild(td.get(0));
     });
-    that.display.append(tr);
+    that.gameTable.append(tr);
   });
-
-  this.container.append(this.display);
+  this.display.prepend(this.gameTable);
   this.initControlPanel();
+  this.initHelper();
 };
 
 /**
@@ -220,21 +223,18 @@ Minesweeper.prototype.initControlPanel = function() {
   var flagCount = this.controlPanel.flagCount;
   var timer = this.controlPanel.timer;
 
-  // need elements on screen for width calculations, hide panel until done
   controlPanel.append(resetButton);
-  controlPanel.css('visibility', 'hidden');
-  this.container.prepend(controlPanel);
+  this.display.prepend(controlPanel);
 
   // overall panel styling
   controlPanel.addClass('control-panel inset');
-  controlPanel.width($(this.display).innerWidth());
 
   // debug link styling
   var debugLink = $(document.createElement('a'));
   debugLink.html('debug');
   debugLink.click(this.toggleDebug);
   debugLink.addClass('debug-link');
-  this.container.append(debugLink);
+  this.display.append(debugLink);
 
   // reset button styling and clicks
   resetButton.addClass('reset-button outset');
@@ -256,15 +256,17 @@ Minesweeper.prototype.initControlPanel = function() {
   timer.html(this.zeroFill(0));
   timer.css('float', 'right');
   timer.css('text-align', 'right');
+};
 
-  controlPanel.css('visibility', 'visible');
+Minesweeper.prototype.initHelper = function() {
+  this.misclickDisplay = $('#misclick-counter');
 };
 
 /**
  * Returns the HTML element for this cell.
  */
 Minesweeper.prototype.getCell = function(row, col) {
-  return $(this.display[0].rows[row].cells[col]);
+  return $(this.gameTable[0].rows[row].cells[col]);
 };
 
 /**
@@ -298,6 +300,7 @@ Minesweeper.prototype.mainClickHandler = function(row, col) {
 
   } else {
     this.misclickCount++;
+    this.misclickDisplay.html(this.misclickCount);
   }
 };
 
@@ -337,7 +340,7 @@ Minesweeper.prototype.revealSingleCell = function(row, col) {
 
   if (displayCell.hasClass('revealed') || cell.flagged) return;
 
-  displayCell.html(this.createElemForValue(cell.val).get(0));
+  displayCell.html(this.createElemForValue(cell.val));
   displayCell.addClass('revealed cell-' + (cell.val == this.MINE ? 'X' : cell.val));
   displayCell.removeClass('outset');
   if (this.debug) displayCell.removeClass('debug');
@@ -421,12 +424,12 @@ Minesweeper.prototype.toggleFlag = function(row, col, forceFlag) {
   var cell = this.field[row][col];
   if (!this.field[row][col].flagged) {
     displayCell.addClass('flagged');
-    displayCell.text(this.FLAG);
+    displayCell.html(this.createElemForValue(this.FLAG));
     this.cellsFlagged++;
     cell.flagged = true;
   } else if (!forceFlag) {
     displayCell.removeClass('flagged');
-    displayCell.html(cell.val);
+    displayCell.html(this.createElemForValue(cell.val));
     this.cellsFlagged--;
     cell.flagged = false;
   }
@@ -505,5 +508,5 @@ Minesweeper.prototype.createElemForValue = function(val) {
     div.addClass('mine');
   }
   div.html(val);
-  return div;
+  return div.get(0);
 }
